@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/h3xry/assessment-tax/internal/config"
+	"github.com/h3xry/assessment-tax/pkg/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/fx"
 	"gorm.io/gorm"
@@ -22,6 +23,9 @@ func NewServer(lc fx.Lifecycle, cfg *config.ENV, db *gorm.DB) *Server {
 		Config: cfg,
 		DB:     db,
 	}
+
+	s.Engine.Validator = &utils.CustomValidator{Validator: utils.NewValidator()}
+
 	s.initRoutes()
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
