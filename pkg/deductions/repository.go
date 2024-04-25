@@ -1,7 +1,7 @@
 package deductions
 
 import (
-	"github.com/h3xry/assessment-tax/pkg/model"
+	"github.com/h3xry/assessment-tax/pkg/models"
 	"gorm.io/gorm"
 )
 
@@ -15,12 +15,12 @@ func NewRepository(db *gorm.DB) *repository {
 	}
 }
 
-func (r *repository) Update(model *model.Deductions) error {
+func (r *repository) Update(model *models.Deductions) error {
 	return r.DB.Save(model).Error
 }
 
-func (r *repository) Find(name string) (*model.Deductions, error) {
-	var deductions model.Deductions
+func (r *repository) Find(name string) (*models.Deductions, error) {
+	var deductions models.Deductions
 	if err := r.DB.Where("name = ?", name).First(&deductions).Error; err != nil {
 		return nil, err
 	}

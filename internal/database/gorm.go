@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/h3xry/assessment-tax/internal/config"
-	"github.com/h3xry/assessment-tax/pkg/model"
+	"github.com/h3xry/assessment-tax/pkg/models"
 	"go.uber.org/fx"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -31,14 +31,14 @@ func NewPostgres(lc fx.Lifecycle, cfg *config.ENV) (*gorm.DB, error) {
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(30 * time.Minute)
 
-	if err := instance.AutoMigrate(&model.Deductions{}); err != nil {
+	if err := instance.AutoMigrate(&models.Deductions{}); err != nil {
 		fmt.Println("database: auto migrate fail! : ", err)
 		return nil, err
 	}
 
 	var cnt int64
-	if instance.Model(&model.Deductions{}).Where("name = ?", "kReceipt").Count(&cnt); cnt == 0 {
-		if err := instance.Create(&model.Deductions{
+	if instance.Model(&models.Deductions{}).Where("name = ?", "kReceipt").Count(&cnt); cnt == 0 {
+		if err := instance.Create(&models.Deductions{
 			Name:   "kReceipt",
 			Amount: 50000.00,
 		}).Error; err != nil {

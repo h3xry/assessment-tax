@@ -1,13 +1,15 @@
 package domain
 
-import "github.com/h3xry/assessment-tax/pkg/model"
+import (
+	"github.com/h3xry/assessment-tax/pkg/models"
+)
 
 type DeductionsRepository interface {
-	Find(name string) (*model.Deductions, error)
-	Update(model *model.Deductions) error
+	Find(name string) (*models.Deductions, error)
+	Update(model *models.Deductions) error
 }
 
 type DeductionsUsecase interface {
-	Find(name string) (*model.Deductions, error)
-	Update(model *model.Deductions) error
+	Find(name string) (*models.Deductions, error)
+	Update(model *models.Deductions) error
 }

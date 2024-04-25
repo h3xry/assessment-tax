@@ -1,4 +1,4 @@
-package model
+package models
 
 type Deductions struct {
 	Name   string  `json:"name" gorm:"unique,type:varchar(20)"`

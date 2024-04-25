@@ -2,7 +2,7 @@ package deductions
 
 import (
 	"github.com/h3xry/assessment-tax/pkg/domain"
-	"github.com/h3xry/assessment-tax/pkg/model"
+	"github.com/h3xry/assessment-tax/pkg/models"
 )
 
 type useCase struct {
@@ -15,10 +15,10 @@ func NewUseCase(repo domain.DeductionsRepository) domain.DeductionsUsecase {
 	}
 }
 
-func (u *useCase) Find(name string) (*model.Deductions, error) {
+func (u *useCase) Find(name string) (*models.Deductions, error) {
 	return u.repo.Find(name)
 }
 
-func (u *useCase) Update(model *model.Deductions) error {
+func (u *useCase) Update(model *models.Deductions) error {
 	return u.repo.Update(model)
 }
