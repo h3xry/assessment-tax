@@ -15,24 +15,24 @@ func NewHandler(route *echo.Group, useCase domain.DeductionsUsecase) *Handler {
 	handler := Handler{
 		useCase: useCase,
 	}
-	route.POST("/k-receipt", handler.setKRecepit())
+	route.POST("/k-receipt", handler.setKReceipt())
 	return &handler
 }
 
-type requestSetKRecepit struct {
+type requestSetKReceipt struct {
 	Amount float64 `json:"amount" validate:"required,min=1,max=100000"`
 }
 
-func (h *Handler) setKRecepit() echo.HandlerFunc {
+func (h *Handler) setKReceipt() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		req := new(requestSetKRecepit)
+		req := new(requestSetKReceipt)
 		if err := c.Bind(req); err != nil {
 			return err
 		}
 		if err := c.Validate(req); err != nil {
 			return err
 		}
-		deduction, err := h.useCase.Find("K-Recepit")
+		deduction, err := h.useCase.Find("K-Receipt")
 		if err != nil {
 			return err
 		}
