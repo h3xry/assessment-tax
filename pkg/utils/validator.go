@@ -2,13 +2,20 @@ package utils
 
 import (
 	"fmt"
-	"net/http"
 	"reflect"
 	"strings"
 
-	"github.com/labstack/echo/v4"
 	"gopkg.in/go-playground/validator.v9"
 )
+
+type ValidatorError struct {
+	Message string
+	Fields  map[string]string
+}
+
+func (e ValidatorError) Error() string {
+	return fmt.Sprint(e.Message)
+}
 
 type CustomValidator struct {
 	Validator *validator.Validate
@@ -28,10 +35,10 @@ func NewValidator() *validator.Validate {
 
 func (cv *CustomValidator) Validate(i interface{}) error {
 	if err := cv.Validator.Struct(i); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{
-			"message": "invalid request",
-			"field":   validatorErrors(err),
-		})
+		return ValidatorError{
+			Message: "invalid request",
+			Fields:  validatorErrors(err),
+		}
 	}
 	return nil
 }

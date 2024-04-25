@@ -32,7 +32,7 @@ func (h *Handler) setKReceipt() echo.HandlerFunc {
 		if err := c.Validate(req); err != nil {
 			return err
 		}
-		deduction, err := h.useCase.Find("K-Receipt")
+		deduction, err := h.useCase.Find("kReceipt")
 		if err != nil {
 			return err
 		}

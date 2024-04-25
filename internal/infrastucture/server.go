@@ -25,6 +25,7 @@ func NewServer(lc fx.Lifecycle, cfg *config.ENV, db *gorm.DB) *Server {
 	}
 
 	s.Engine.Validator = &utils.CustomValidator{Validator: utils.NewValidator()}
+	s.Engine.HTTPErrorHandler = customHTTPErrorHandler
 
 	s.initRoutes()
 	lc.Append(fx.Hook{
