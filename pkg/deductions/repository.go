@@ -16,7 +16,7 @@ func NewRepository(db *gorm.DB) *repository {
 }
 
 func (r *repository) Update(model *models.Deductions) error {
-	return r.DB.Save(model).Error
+	return r.DB.Where("name = ?", model.Name).Save(model).Error
 }
 
 func (r *repository) Find(name string) (*models.Deductions, error) {
