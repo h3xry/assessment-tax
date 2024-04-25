@@ -14,6 +14,7 @@ func customHTTPErrorHandler(err error, c echo.Context) {
 	message := "Internal Server Error"
 	if he, ok := err.(*echo.HTTPError); ok {
 		code = he.Code
+		message = he.Message.(string)
 	}
 	if customErr, ok := err.(domain.Error); ok {
 		code = customErr.HttpCode
