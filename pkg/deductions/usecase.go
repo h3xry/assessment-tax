@@ -20,5 +20,8 @@ func (u *useCase) Find(name string) (*models.Deductions, error) {
 }
 
 func (u *useCase) Update(model *models.Deductions) error {
+	if model.Name == "K-Recepit" && (model.Amount > 100000 || model.Amount < 1) {
+		return domain.ErrAmountExceed
+	}
 	return u.repo.Update(model)
 }

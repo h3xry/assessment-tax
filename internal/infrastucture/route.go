@@ -15,8 +15,12 @@ func (s *Server) initRoutes() {
 		return c.String(http.StatusOK, "Hello, Go Bootcamp!")
 	})
 
+	deductionsRepository := deductions.NewRepository(s.DB)
+	deductionsUsecase := deductions.NewUseCase(deductionsRepository)
+
 	admin := s.Engine.Group("/admin")
 	{
-		deductions.NewHandler(admin.Group("/deductions"))
+
+		deductions.NewHandler(admin.Group("/deductions"), deductionsUsecase)
 	}
 }
