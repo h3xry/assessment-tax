@@ -48,3 +48,38 @@ func TestHandleSetKReceipt(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.JSONEq(t, string(resJsonExpected), rec.Body.String())
 }
+
+func TestHandlePersonal(t *testing.T) {
+	e := echo.New()
+	e.Validator = &utils.CustomValidator{Validator: utils.NewValidator()}
+	mockUsecase := new(mocks.DeductionsUsecase)
+	mockUsecase.On("Find", "personalDeduction").Return(&models.Deductions{
+		Name:   "personalDeduction",
+		Amount: 60000,
+	}, nil).Once()
+	mockUsecase.On("Update", &models.Deductions{
+		Name:   "personalDeduction",
+		Amount: 50000,
+	}).Return(nil).Once()
+
+	handle := NewHandler(e.Group(""), mockUsecase)
+	bodyReq := requestSetPersonal{
+		Amount: 50000,
+	}
+	bodyJson, err := json.Marshal(bodyReq)
+	assert.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(bodyJson)))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err = handle.setPersonal()(c)
+
+	resJsonExpected, err := json.Marshal(echo.Map{
+		"personalDeduction": bodyReq.Amount,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.JSONEq(t, string(resJsonExpected), rec.Body.String())
+}
