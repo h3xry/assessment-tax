@@ -28,5 +28,11 @@ func (u *useCase) Update(model *models.Deductions) error {
 			Message:  domain.ErrAmountExceed.Error(),
 		}
 	}
+	if model.Name == "personalDeduction" && (model.Amount > 100000 || model.Amount < 10000) {
+		return domain.Error{
+			HttpCode: http.StatusBadRequest,
+			Message:  domain.ErrAmountExceed.Error(),
+		}
+	}
 	return u.repo.Update(model)
 }

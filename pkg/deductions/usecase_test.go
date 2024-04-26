@@ -50,8 +50,27 @@ func TestUsecaseUpdate(t *testing.T) {
 		mockUserUsecase.AssertExpectations(t)
 	})
 
+	t.Run("success personal deduction", func(t *testing.T) {
+		mockDeduction.Name = "personalDeduction"
+		mockDeduction.Amount = 10000
+		mockDeductionRepo.On("Update", &mockDeduction).Return(nil).Once()
+		usecase := NewUseCase(mockDeductionRepo)
+		err := usecase.Update(&mockDeduction)
+		assert.NoError(t, err)
+		mockUserUsecase.AssertExpectations(t)
+	})
+
 	t.Run("error", func(t *testing.T) {
 		mockDeductionRepo.On("Update", &mockDeduction).Return(assert.AnError).Once()
+		usecase := NewUseCase(mockDeductionRepo)
+		err := usecase.Update(&mockDeduction)
+		assert.Error(t, err)
+		mockUserUsecase.AssertExpectations(t)
+	})
+
+	t.Run("error personal deduction", func(t *testing.T) {
+		mockDeduction.Name = "personalDeduction"
+		mockDeduction.Amount = 200000
 		usecase := NewUseCase(mockDeductionRepo)
 		err := usecase.Update(&mockDeduction)
 		assert.Error(t, err)
