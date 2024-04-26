@@ -47,6 +47,16 @@ func NewPostgres(lc fx.Lifecycle, cfg *config.ENV) (*gorm.DB, error) {
 		}
 	}
 
+	if instance.Model(&models.Deductions{}).Where("name = ?", "personalDeduction").Count(&cnt); cnt == 0 {
+		if err := instance.Create(&models.Deductions{
+			Name:   "personalDeduction",
+			Amount: 60000.00,
+		}).Error; err != nil {
+			fmt.Println("database: create personalDeduction fail! : ", err)
+			return nil, err
+		}
+	}
+
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			fmt.Println("database: closing connection")
