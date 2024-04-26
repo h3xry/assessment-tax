@@ -41,7 +41,7 @@ func (h *Handler) setKReceipt() echo.HandlerFunc {
 			return err
 		}
 		return c.JSON(http.StatusOK, echo.Map{
-			"message": deduction.Amount,
+			"kReceipt": deduction.Amount,
 		})
 	}
 }
