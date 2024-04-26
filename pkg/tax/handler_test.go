@@ -38,24 +38,35 @@ func setupHandleCalculation(body []byte) (*httptest.ResponseRecorder, error) {
 	return rec, err
 }
 
+type handleCalculationTestCase struct {
+	name             string
+	bodyReqInterface requestCalculation
+	responseExpected string
+}
+
 func TestHandleCalculation(t *testing.T) {
-	bodyReqInterface := requestCalculation{
-		TotalIncome: 500000.0,
-		Wht:         0.0,
-		Allowances: []domain.TaxAllowance{
-			{
-				AllowanceType: "donation",
-				Amount:        0.0,
+	testCases := []handleCalculationTestCase{
+		{
+			name: "story-1-success",
+			bodyReqInterface: requestCalculation{
+				TotalIncome: 500000.0,
+				Wht:         0.0,
+				Allowances: []domain.TaxAllowance{
+					{
+						AllowanceType: "donation",
+						Amount:        0.0,
+					},
+				},
 			},
+			responseExpected: `{"tax":29000}`,
 		},
 	}
-	bodyReqJson, err := json.Marshal(bodyReqInterface)
-	rec, err := setupHandleCalculation(bodyReqJson)
-	assert.NoError(t, err)
-	resJsonExpected, err := json.Marshal(echo.Map{
-		"tax": 29000.0,
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.JSONEq(t, string(resJsonExpected), rec.Body.String())
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			bodyReqJson, err := json.Marshal(tt.bodyReqInterface)
+			rec, err := setupHandleCalculation(bodyReqJson)
+			assert.NoError(t, err)
+			assert.JSONEq(t, tt.responseExpected, rec.Body.String())
+		})
+	}
 }
