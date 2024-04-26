@@ -15,24 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHandleCalculation(t *testing.T) {
-	bodyReqInterface := requestCalculation{
-		TotalIncome: 500000.0,
-		Wht:         0.0,
-		Allowances: []domain.TaxAllowance{
-			{
-				AllowanceType: "donation",
-				Amount:        0.0,
-			},
-		},
-	}
-	bodyReqJson, err := json.Marshal(bodyReqInterface)
-	assert.NoError(t, err)
-
+func setupHandleCalculation(body []byte) (*httptest.ResponseRecorder, error) {
 	e := echo.New()
 	e.Validator = &utils.CustomValidator{Validator: utils.NewValidator()}
 
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(bodyReqJson)))
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(body)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 	useCase := NewUseCase()
@@ -47,10 +34,24 @@ func TestHandleCalculation(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	err = handler.handleCalculation()(c)
-	if err != nil {
-		t.Errorf("Error: %v", err)
+	err := handler.handleCalculation()(c)
+	return rec, err
+}
+
+func TestHandleCalculation(t *testing.T) {
+	bodyReqInterface := requestCalculation{
+		TotalIncome: 500000.0,
+		Wht:         0.0,
+		Allowances: []domain.TaxAllowance{
+			{
+				AllowanceType: "donation",
+				Amount:        0.0,
+			},
+		},
 	}
+	bodyReqJson, err := json.Marshal(bodyReqInterface)
+	rec, err := setupHandleCalculation(bodyReqJson)
+	assert.NoError(t, err)
 	resJsonExpected, err := json.Marshal(echo.Map{
 		"tax": 29000.0,
 	})
