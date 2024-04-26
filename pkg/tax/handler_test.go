@@ -7,19 +7,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/h3xry/assessment-tax/pkg/domain"
 	"github.com/h3xry/assessment-tax/pkg/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHandleCalculation(t *testing.T) {
-	bodyReqInterface := echo.Map{
-		"totalIncome": 500000.0,
-		"wht":         0.0,
-		"allowances": []echo.Map{
+	bodyReqInterface := requestCalculation{
+		TotalIncome: 500000.0,
+		Wht:         0.0,
+		Allowances: []domain.TaxAllowance{
 			{
-				"allowanceType": "donation",
-				"amount":        0.0,
+				AllowanceType: "donation",
+				Amount:        0.0,
 			},
 		},
 	}
@@ -36,7 +37,9 @@ func TestHandleCalculation(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	err = handler.handleCalculation()(c)
-
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
 	resJsonExpected, err := json.Marshal(echo.Map{
 		"tax": 29000.0,
 	})
