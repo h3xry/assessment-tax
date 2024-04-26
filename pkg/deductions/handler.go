@@ -16,6 +16,7 @@ func NewHandler(route *echo.Group, useCase domain.DeductionsUsecase) *Handler {
 		useCase: useCase,
 	}
 	route.POST("/k-receipt", handler.setKReceipt())
+	route.POST("/personal", handler.setPersonal())
 	return &handler
 }
 
