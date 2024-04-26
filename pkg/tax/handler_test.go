@@ -13,17 +13,17 @@ import (
 )
 
 func TestHandleCalculation(t *testing.T) {
-	bodyReqByte := `{
+	bodyReqInterface := echo.Map{
 		"totalIncome": 500000.0,
-		"wht": 0.0,
-		"allowances": [
-		  {
-			"allowanceType": "donation",
-			"amount": 0.0
-		  }
-		]
-	  }`
-	bodyReqJson, err := json.Marshal(bodyReqByte)
+		"wht":         0.0,
+		"allowances": []echo.Map{
+			{
+				"allowanceType": "donation",
+				"amount":        0.0,
+			},
+		},
+	}
+	bodyReqJson, err := json.Marshal(bodyReqInterface)
 	assert.NoError(t, err)
 
 	e := echo.New()
@@ -37,9 +37,9 @@ func TestHandleCalculation(t *testing.T) {
 	c := e.NewContext(req, rec)
 	err = handler.handleCalculation()(c)
 
-	resJsonExpected, err := json.Marshal(`{
-		"tax": 29000.0
-	  }`)
+	resJsonExpected, err := json.Marshal(echo.Map{
+		"tax": "29000.0",
+	})
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.JSONEq(t, string(resJsonExpected), rec.Body.String())
