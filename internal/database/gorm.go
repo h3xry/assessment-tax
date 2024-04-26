@@ -36,27 +36,19 @@ func NewPostgres(lc fx.Lifecycle, cfg *config.ENV) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	var cnt int64
-	if instance.Model(&models.Deductions{}).Where("name = ?", "kReceipt").Count(&cnt); cnt == 0 {
-		if err := instance.Create(&models.Deductions{
+	deductions := []*models.Deductions{
+		{
 			Name:   "kReceipt",
 			Amount: 50000.00,
-		}).Error; err != nil {
-			fmt.Println("database: create kReceipt fail! : ", err)
-			return nil, err
-		}
-	}
-
-	if instance.Model(&models.Deductions{}).Where("name = ?", "personalDeduction").Count(&cnt); cnt == 0 {
-		if err := instance.Create(&models.Deductions{
+		},
+		{
 			Name:   "personalDeduction",
 			Amount: 60000.00,
-		}).Error; err != nil {
-			fmt.Println("database: create personalDeduction fail! : ", err)
-			return nil, err
-		}
+		},
 	}
-
+	if err := seedDeductionsDB(instance, deductions); err != nil {
+		return nil, err
+	}
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			fmt.Println("database: closing connection")
@@ -64,4 +56,18 @@ func NewPostgres(lc fx.Lifecycle, cfg *config.ENV) (*gorm.DB, error) {
 		},
 	})
 	return instance, nil
+}
+
+func seedDeductionsDB(instance *gorm.DB, deductions []*models.Deductions) error {
+	for _, d := range deductions {
+		var cnt int64
+		if instance.Model(&models.Deductions{}).Where("name = ?", d.Name).Count(&cnt); cnt > 0 {
+			continue
+		}
+		if err := instance.Create(d).Error; err != nil {
+			fmt.Printf("database: seed deductions ( %s ) fail! : %+v", d.Name, err)
+			return err
+		}
+	}
+	return nil
 }
