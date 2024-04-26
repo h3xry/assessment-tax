@@ -38,7 +38,7 @@ func TestHandleCalculation(t *testing.T) {
 	err = handler.handleCalculation()(c)
 
 	resJsonExpected, err := json.Marshal(echo.Map{
-		"tax": "29000.0",
+		"tax": 29000.0,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
