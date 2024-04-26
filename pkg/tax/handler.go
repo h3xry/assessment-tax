@@ -7,12 +7,16 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type Handler struct{}
+type Handler struct {
+	userCase domain.TaxUsecase
+}
 
-func NewHandler(route *echo.Group) *Handler {
-	handler := Handler{}
+func NewHandler(route *echo.Group, userCase domain.TaxUsecase) *Handler {
+	handler := Handler{
+		userCase: userCase,
+	}
 	route.POST("/calculation", handler.handleCalculation())
-	return &Handler{}
+	return &handler
 }
 
 type requestCalculation struct {
@@ -30,8 +34,9 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 		if err := c.Validate(req); err != nil {
 			return err
 		}
+		tax := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
 		return c.JSON(http.StatusOK, echo.Map{
-			"tax": 29000.0,
+			"tax": tax,
 		})
 	}
 }
