@@ -15,18 +15,22 @@ func (uc *useCase) CalculateTax(income float64, wht float64, allowances []domain
 		allowance.Validate()
 		totalIncome -= allowance.Amount
 	}
-	var tax float64 = totalIncome
-	if tax > 2000000 {
-		tax = (tax - 2000000) * 0.35
+	var tax float64
+	if totalIncome > 2000000 {
+		tax += (totalIncome - 2000000) * 0.35
+		totalIncome = 2000000
 	}
-	if tax > 1000000 {
-		tax = (tax - 1000000) * 0.2
+	if totalIncome > 1000000 {
+		tax += (totalIncome - 1000000) * 0.2
+		totalIncome = 1000000
 	}
-	if tax > 500000 {
-		tax = (tax - 500000) * 0.15
+	if totalIncome > 500000 {
+		tax += (totalIncome - 500000) * 0.15
+		totalIncome = 500000
 	}
-	if tax > 150000 {
-		tax = (tax - 150000) * 0.1
+	if totalIncome > 150000 {
+		tax += (totalIncome - 150000) * 0.1
+		totalIncome = 150000
 	}
 	return tax - wht
 }
