@@ -32,5 +32,15 @@ func TestHandleCalculation(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(bodyReqJson)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
-	NewHandler(e.Group(""))
+	handler := NewHandler(e.Group(""))
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err = handler.handleCalculation()(c)
+
+	resJsonExpected, err := json.Marshal(`{
+		"tax": 29000.0
+	  }`)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.JSONEq(t, string(resJsonExpected), rec.Body.String())
 }
