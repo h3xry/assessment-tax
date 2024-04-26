@@ -5,7 +5,7 @@ import "github.com/h3xry/assessment-tax/pkg/domain"
 type useCase struct {
 }
 
-func NewUseCase() domain.Tax {
+func NewUseCase() domain.TaxUsecase {
 	return &useCase{}
 }
 

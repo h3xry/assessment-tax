@@ -1,6 +1,6 @@
 package domain
 
-type Tax interface {
+type TaxUsecase interface {
 	CalculateTax(income float64, wht float64, allowances []TaxAllowance) float64
 }
 
