@@ -34,3 +34,36 @@ func TestUsecaseFind(t *testing.T) {
 		mockUserUsecase.AssertExpectations(t)
 	})
 }
+
+func TestUsecaseUpdate(t *testing.T) {
+	mockDeduction := models.Deductions{}
+	gofakeit.Struct(&mockDeduction)
+
+	mockDeductionRepo := new(mocks.DeductionsRepo)
+	mockUserUsecase := new(mocks.DeductionsUsecase)
+
+	t.Run("success", func(t *testing.T) {
+		mockDeductionRepo.On("Update", &mockDeduction).Return(nil).Once()
+		usecase := NewUseCase(mockDeductionRepo)
+		err := usecase.Update(&mockDeduction)
+		assert.NoError(t, err)
+		mockUserUsecase.AssertExpectations(t)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		mockDeductionRepo.On("Update", &mockDeduction).Return(assert.AnError).Once()
+		usecase := NewUseCase(mockDeductionRepo)
+		err := usecase.Update(&mockDeduction)
+		assert.Error(t, err)
+		mockUserUsecase.AssertExpectations(t)
+	})
+
+	t.Run("error amount exceed", func(t *testing.T) {
+		mockDeduction.Name = "kReceipt"
+		mockDeduction.Amount = 100001
+		usecase := NewUseCase(mockDeductionRepo)
+		err := usecase.Update(&mockDeduction)
+		assert.Error(t, err)
+		mockUserUsecase.AssertExpectations(t)
+	})
+}
