@@ -11,22 +11,7 @@ import (
 )
 
 func TestUpdate(t *testing.T) {
-
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("error initializing sql mock: %s", err)
-	}
-	defer db.Close()
-
-	gormDB, err := gorm.Open(postgres.New(postgres.Config{
-		Conn:       db,
-		DriverName: "postgres",
-	}), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("error initializing GORM: %s", err)
-	}
-
-	repo := &repository{DB: gormDB}
+	repo, mock := setupTestRepo()
 
 	model := &models.Deductions{Name: "kReceipt", Amount: 50000}
 	mock.ExpectBegin()
@@ -44,22 +29,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("error initializing sql mock: %s", err)
-	}
-	defer db.Close()
-
-	gormDB, err := gorm.Open(postgres.New(postgres.Config{
-		Conn:       db,
-		DriverName: "postgres",
-	}), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("error initializing GORM: %s", err)
-	}
-
-	repo := &repository{DB: gormDB}
+	repo, mock := setupTestRepo()
 
 	rows := sqlmock.NewRows([]string{"name", "amount"}).
 		AddRow("kReceipt", 50000.00)
@@ -84,4 +54,21 @@ func TestFind(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unfulfilled expectations: %s", err)
 	}
+}
+
+func setupTestRepo() (*repository, sqlmock.Sqlmock) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		panic(err)
+	}
+
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn:       db,
+		DriverName: "postgres",
+	}), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	return &repository{DB: gormDB}, mock
+
 }
