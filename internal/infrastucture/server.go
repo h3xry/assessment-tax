@@ -5,20 +5,28 @@ import (
 	"fmt"
 
 	"github.com/h3xry/assessment-tax/internal/config"
+	"github.com/h3xry/assessment-tax/pkg/utils"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/fx"
+	"gorm.io/gorm"
 )
 
 type Server struct {
 	Engine *echo.Echo
 	Config *config.ENV
+	DB     *gorm.DB
 }
 
-func NewServer(lc fx.Lifecycle, cfg *config.ENV) *Server {
+func NewServer(lc fx.Lifecycle, cfg *config.ENV, db *gorm.DB) *Server {
 	s := Server{
 		Engine: echo.New(),
 		Config: cfg,
+		DB:     db,
 	}
+
+	s.Engine.Validator = &utils.CustomValidator{Validator: utils.NewValidator()}
+	s.Engine.HTTPErrorHandler = customHTTPErrorHandler
+
 	s.initRoutes()
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
