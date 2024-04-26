@@ -58,7 +58,21 @@ func TestHandleCalculation(t *testing.T) {
 					},
 				},
 			},
-			responseExpected: `{"tax":29000}`,
+			responseExpected: `{"tax":29000.0}`,
+		},
+		{
+			name: "story-2-success",
+			bodyReqInterface: requestCalculation{
+				TotalIncome: 500000.0,
+				Wht:         25000.0,
+				Allowances: []domain.TaxAllowance{
+					{
+						AllowanceType: "donation",
+						Amount:        0.0,
+					},
+				},
+			},
+			responseExpected: `{"tax":4000.0}`,
 		},
 	}
 	for _, tt := range testCases {
