@@ -28,26 +28,23 @@ func TestHandleSetKReceipt(t *testing.T) {
 	}).Return(nil).Once()
 
 	handle := NewHandler(e.Group(""), mockUsecase)
+	bodyReq := requestSetKReceipt{
+		Amount: 10000,
+	}
+	bodyJson, err := json.Marshal(bodyReq)
+	assert.NoError(t, err)
 
-	t.Run("success", func(t *testing.T) {
-		bodyReq := requestSetKReceipt{
-			Amount: 10000,
-		}
-		bodyJson, err := json.Marshal(bodyReq)
-		assert.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(bodyJson)))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
-		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(bodyJson)))
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err = handle.setKReceipt()(c)
 
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
-		err = handle.setKReceipt()(c)
-
-		resJsonExpected, err := json.Marshal(echo.Map{
-			"kReceipt": bodyReq.Amount,
-		})
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.JSONEq(t, string(resJsonExpected), rec.Body.String())
+	resJsonExpected, err := json.Marshal(echo.Map{
+		"kReceipt": bodyReq.Amount,
 	})
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.JSONEq(t, string(resJsonExpected), rec.Body.String())
 }
