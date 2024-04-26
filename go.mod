@@ -1,6 +1,8 @@
 module github.com/h3xry/assessment-tax
 
-go 1.21.6
+go 1.22
+
+toolchain go1.22.2
 
 require (
 	github.com/labstack/echo/v4 v4.12.0
@@ -13,6 +15,7 @@ require (
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
+	github.com/brianvoe/gofakeit/v7 v7.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
