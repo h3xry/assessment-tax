@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/h3xry/assessment-tax/pkg/deductions"
+	"github.com/h3xry/assessment-tax/pkg/tax"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -31,5 +32,11 @@ func (s *Server) initRoutes() {
 			return false, nil
 		}))
 		deductions.NewHandler(admin.Group("/deductions"), deductionsUsecase)
+	}
+
+	taxUsecase := tax.NewUseCase()
+	user := s.Engine.Group("")
+	{
+		tax.NewHandler(user.Group("/tax"), taxUsecase, deductionsUsecase)
 	}
 }
