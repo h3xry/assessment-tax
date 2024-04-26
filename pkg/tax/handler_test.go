@@ -33,7 +33,9 @@ func TestHandleCalculation(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(bodyReqJson)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
-	handler := NewHandler(e.Group(""))
+	useCase := NewUseCase()
+	handler := NewHandler(e.Group(""), useCase)
+
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	err = handler.handleCalculation()(c)
