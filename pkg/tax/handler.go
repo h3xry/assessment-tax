@@ -8,12 +8,14 @@ import (
 )
 
 type Handler struct {
-	userCase domain.TaxUsecase
+	userCase         domain.TaxUsecase
+	deductionUsecase domain.DeductionsUsecase
 }
 
-func NewHandler(route *echo.Group, userCase domain.TaxUsecase) *Handler {
+func NewHandler(route *echo.Group, userCase domain.TaxUsecase, deductionUsecase domain.DeductionsUsecase) *Handler {
 	handler := Handler{
-		userCase: userCase,
+		userCase:         userCase,
+		deductionUsecase: deductionUsecase,
 	}
 	route.POST("/calculation", handler.handleCalculation())
 	return &handler
@@ -34,6 +36,15 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 		if err := c.Validate(req); err != nil {
 			return err
 		}
+		personal, err := h.deductionUsecase.Find("personalDeduction")
+		if err != nil {
+			return err
+		}
+		req.Allowances = append(req.Allowances, domain.TaxAllowance{
+			AllowanceType: "personalDeduction",
+			Amount:        personal.Amount,
+		})
+
 		tax := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
 		return c.JSON(http.StatusOK, echo.Map{
 			"tax": tax,

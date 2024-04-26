@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/h3xry/assessment-tax/mocks"
 	"github.com/h3xry/assessment-tax/pkg/domain"
+	"github.com/h3xry/assessment-tax/pkg/models"
 	"github.com/h3xry/assessment-tax/pkg/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +36,14 @@ func TestHandleCalculation(t *testing.T) {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 	useCase := NewUseCase()
-	handler := NewHandler(e.Group(""), useCase)
+
+	deductionUsecase := new(mocks.DeductionsUsecase)
+	deductionUsecase.On("Find", "personalDeduction").Return(&models.Deductions{
+		Name:   "personalDeduction",
+		Amount: 60000,
+	}, nil).Once()
+
+	handler := NewHandler(e.Group(""), useCase, deductionUsecase)
 
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
