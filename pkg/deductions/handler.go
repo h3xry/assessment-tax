@@ -45,3 +45,30 @@ func (h *Handler) setKReceipt() echo.HandlerFunc {
 		})
 	}
 }
+
+type requestSetPersonal struct {
+	Amount float64 `json:"amount" validate:"required,min=10000,max=100000"`
+}
+
+func (h *Handler) setPersonal() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		req := new(requestSetPersonal)
+		if err := c.Bind(req); err != nil {
+			return err
+		}
+		if err := c.Validate(req); err != nil {
+			return err
+		}
+		deduction, err := h.useCase.Find("personalDeduction")
+		if err != nil {
+			return err
+		}
+		deduction.Amount = req.Amount
+		if err := h.useCase.Update(deduction); err != nil {
+			return err
+		}
+		return c.JSON(http.StatusOK, echo.Map{
+			"personalDeduction": deduction.Amount,
+		})
+	}
+}
