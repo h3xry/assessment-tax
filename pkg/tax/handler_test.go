@@ -88,6 +88,15 @@ func TestHandleCalculation(t *testing.T) {
 			},
 			responseExpected: `{"tax":19000.0}`,
 		},
+		{
+			name: "income-600000-no-allowance",
+			bodyReqInterface: requestCalculation{
+				TotalIncome: 600000.0,
+				Wht:         0.0,
+				Allowances:  []domain.TaxAllowance{},
+			},
+			responseExpected: `{"tax":41000.0}`,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
