@@ -44,6 +44,11 @@ type handleCalculationTestCase struct {
 	responseExpected string
 }
 
+type responseCalculation struct {
+	Tax      float64           `json:"tax"`
+	TaxLevel []domain.TaxLevel `json:"taxLevel"`
+}
+
 func TestHandleCalculation(t *testing.T) {
 	testCases := []handleCalculationTestCase{
 		{
@@ -97,13 +102,38 @@ func TestHandleCalculation(t *testing.T) {
 			},
 			responseExpected: `{"tax":41000.0}`,
 		},
+		{
+			name: "story-4-success",
+			bodyReqInterface: requestCalculation{
+				TotalIncome: 500000.0,
+				Wht:         0.0,
+				Allowances: []domain.TaxAllowance{
+					{
+						AllowanceType: "donation",
+						Amount:        200000.0,
+					},
+				},
+			},
+			responseExpected: `{"tax":19000,"taxLevel":[{"level":"0-150,000","tax":0},{"level":"150,001-500,000","tax":19000},{"level":"500,001-1,000,000","tax":0},{"level":"1,000,001-2,000,000","tax":0},{"level":"2,000,001 ขึ้นไป","tax":0}]}`,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			bodyReqJson, err := json.Marshal(tt.bodyReqInterface)
 			rec, err := setupHandleCalculation(bodyReqJson)
 			assert.NoError(t, err)
-			assert.JSONEq(t, tt.responseExpected, rec.Body.String())
+			resJson := responseCalculation{}
+			if err := json.Unmarshal([]byte(rec.Body.String()), &resJson); err != nil {
+				assert.Fail(t, "cannot unmarshal response")
+			}
+			expectedJson := responseCalculation{}
+			if err := json.Unmarshal([]byte(tt.responseExpected), &expectedJson); err != nil {
+				assert.Fail(t, "cannot unmarshal response")
+			}
+			if len(expectedJson.TaxLevel) != 0 {
+				assert.Equal(t, expectedJson.TaxLevel, resJson.TaxLevel)
+			}
+			assert.Equal(t, expectedJson.Tax, resJson.Tax)
 		})
 	}
 }

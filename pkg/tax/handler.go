@@ -45,9 +45,10 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 			Amount:        personal.Amount,
 		})
 
-		tax := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
+		tax, taxLevel := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
 		return c.JSON(http.StatusOK, echo.Map{
-			"tax": tax,
+			"tax":      tax,
+			"taxLevel": taxLevel,
 		})
 	}
 }
