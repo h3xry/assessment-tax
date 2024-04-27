@@ -97,6 +97,20 @@ func TestHandleCalculation(t *testing.T) {
 			},
 			responseExpected: `{"tax":41000.0}`,
 		},
+		{
+			name: "story-4-success",
+			bodyReqInterface: requestCalculation{
+				TotalIncome: 500000.0,
+				Wht:         0.0,
+				Allowances: []domain.TaxAllowance{
+					{
+						AllowanceType: "donation",
+						Amount:        200000.0,
+					},
+				},
+			},
+			responseExpected: `{"tax":19000,"taxLevel":[{"level":"0-150,000","tax":0},{"level":"150,001-500,000","tax":19000},{"level":"500,001-1,000,000","tax":0},{"level":"1,000,001-2,000,000","tax":0},{"level":"2,000,001 ขึ้นไป","tax":0}]}`,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
