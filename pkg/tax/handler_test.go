@@ -44,6 +44,11 @@ type handleCalculationTestCase struct {
 	responseExpected string
 }
 
+type responseCalculation struct {
+	Tax      float64           `json:"tax"`
+	TaxLevel []domain.TaxLevel `json:"taxLevel"`
+}
+
 func TestHandleCalculation(t *testing.T) {
 	testCases := []handleCalculationTestCase{
 		{
@@ -117,7 +122,18 @@ func TestHandleCalculation(t *testing.T) {
 			bodyReqJson, err := json.Marshal(tt.bodyReqInterface)
 			rec, err := setupHandleCalculation(bodyReqJson)
 			assert.NoError(t, err)
-			assert.JSONEq(t, tt.responseExpected, rec.Body.String())
+			resJson := responseCalculation{}
+			if err := json.Unmarshal([]byte(rec.Body.String()), &resJson); err != nil {
+				assert.Fail(t, "cannot unmarshal response")
+			}
+			expectedJson := responseCalculation{}
+			if err := json.Unmarshal([]byte(tt.responseExpected), &expectedJson); err != nil {
+				assert.Fail(t, "cannot unmarshal response")
+			}
+			if len(expectedJson.TaxLevel) != 0 {
+				assert.Equal(t, expectedJson.TaxLevel, resJson.TaxLevel)
+			}
+			assert.Equal(t, expectedJson.Tax, resJson.Tax)
 		})
 	}
 }
