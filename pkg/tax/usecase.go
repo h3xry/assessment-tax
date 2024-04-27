@@ -39,7 +39,7 @@ func (uc *useCase) CalculateTax(income float64, wht float64, allowances []domain
 		Tax:   tempTax,
 	})
 	if totalIncome > 500000 {
-		tempTax += (totalIncome - 500000) * 0.15
+		tempTax = (totalIncome - 500000) * 0.15
 		tax += tempTax
 		totalIncome = 500000
 	}
@@ -48,7 +48,7 @@ func (uc *useCase) CalculateTax(income float64, wht float64, allowances []domain
 		Tax:   tempTax,
 	})
 	if totalIncome > 150000 {
-		tempTax += (totalIncome - 150000) * 0.1
+		tempTax = (totalIncome - 150000) * 0.1
 		tax += tempTax
 		totalIncome = 150000
 	}
