@@ -12,7 +12,7 @@ func NewUseCase() domain.TaxUsecase {
 	return &useCase{}
 }
 
-func (uc *useCase) CalculateTax(income float64, wht float64, allowances []domain.TaxAllowance) (float64, []domain.TaxLevel) {
+func (uc *useCase) CalculateTax(income float64, wht float64, allowances []domain.TaxAllowance) (float64, float64, []domain.TaxLevel) {
 	totalIncome := income
 	for _, allowance := range allowances {
 		allowance.Validate()
@@ -60,5 +60,11 @@ func (uc *useCase) CalculateTax(income float64, wht float64, allowances []domain
 		Level: "0-150,000",
 		Tax:   0,
 	})
-	return tax - wht, lo.Reverse(taxLevel)
+	var taxRefund float64
+	if tax < wht {
+		taxRefund = wht - tax
+	} else {
+		tax = tax - wht
+	}
+	return tax, taxRefund, lo.Reverse(taxLevel)
 }

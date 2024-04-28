@@ -24,8 +24,8 @@ func TestUsecaseCalculateTax(t *testing.T) {
 	}
 	expected := 29000.0
 	uc := NewUseCase()
-	result, _ := uc.CalculateTax(income, wht, allowances)
-	if result != expected {
-		t.Errorf("expected %f but got %f", expected, result)
+	tax, taxRefund, taxLevel := uc.CalculateTax(income, wht, allowances)
+	if tax != expected {
+		t.Errorf("expected %.2f result %.2f\n taxRefun %.2f\n TaxLevel %+v", expected, tax, taxRefund, taxLevel)
 	}
 }
