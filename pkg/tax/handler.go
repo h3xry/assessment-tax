@@ -20,8 +20,8 @@ func NewHandler(route *echo.Group, userCase domain.TaxUsecase, deductionUsecase 
 		userCase:         userCase,
 		deductionUsecase: deductionUsecase,
 	}
-	route.POST("/calculation", handler.handleCalculation())
-	route.POST("/calculation/upload-csv", handler.handleCalculationCSV())
+	route.POST("/calculations", handler.handleCalculation())
+	route.POST("/calculations/upload-csv", handler.handleCalculationCSV())
 	return &handler
 }
 
