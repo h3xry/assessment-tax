@@ -1,7 +1,7 @@
 package domain
 
 type TaxUsecase interface {
-	CalculateTax(income float64, wht float64, allowances []TaxAllowance) (float64, []TaxLevel)
+	CalculateTax(income float64, wht float64, allowances []TaxAllowance) (float64, float64, []TaxLevel)
 }
 
 type TaxAllowance struct {
