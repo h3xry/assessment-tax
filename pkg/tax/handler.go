@@ -1,7 +1,10 @@
 package tax
 
 import (
+	"encoding/csv"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/h3xry/assessment-tax/pkg/domain"
 	"github.com/labstack/echo/v4"
@@ -18,6 +21,7 @@ func NewHandler(route *echo.Group, userCase domain.TaxUsecase, deductionUsecase 
 		deductionUsecase: deductionUsecase,
 	}
 	route.POST("/calculation", handler.handleCalculation())
+	route.POST("/calculation/upload-csv", handler.handleCalculationCSV())
 	return &handler
 }
 
@@ -45,10 +49,90 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 			Amount:        personal.Amount,
 		})
 
-		tax, taxLevel := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
-		return c.JSON(http.StatusOK, echo.Map{
+		tax, taxRefund, taxLevel := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
+		response := echo.Map{
 			"tax":      tax,
 			"taxLevel": taxLevel,
+		}
+		if taxRefund > 0 {
+			response["taxRefund"] = taxRefund
+		}
+		return c.JSON(http.StatusOK, response)
+	}
+}
+
+func (h *Handler) handleCalculationCSV() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		file, err := c.FormFile("taxFile")
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		reader := csv.NewReader(src)
+		records, err := reader.ReadAll()
+		if err != nil {
+			return err
+		}
+		taxs := []requestCalculation{}
+		for i, record := range records {
+			if i == 0 {
+				continue
+			}
+			totalIncome, err := strconv.ParseFloat(record[0], 64)
+			if err != nil {
+				return err
+			}
+			wht, err := strconv.ParseFloat(record[1], 64)
+			if err != nil {
+				return err
+			}
+			if wht >= totalIncome {
+				return errors.New("with holding tax must be less than total income")
+			}
+			donation, err := strconv.ParseFloat(record[2], 64)
+			allowances := []domain.TaxAllowance{}
+			allowances = append(allowances, domain.TaxAllowance{
+				AllowanceType: "donation",
+				Amount:        donation,
+			})
+
+			taxs = append(taxs, requestCalculation{
+				TotalIncome: totalIncome,
+				Wht:         wht,
+				Allowances:  allowances,
+			})
+		}
+		result := []echo.Map{}
+		for _, v := range taxs {
+			personal, err := h.deductionUsecase.Find("personalDeduction")
+			if err != nil {
+				return err
+			}
+			v.Allowances = append(v.Allowances, domain.TaxAllowance{
+				AllowanceType: "personalDeduction",
+				Amount:        personal.Amount,
+			})
+			tax, refund, _ := h.userCase.CalculateTax(v.TotalIncome, v.Wht, v.Allowances)
+			if refund > 0 {
+				result = append(result, echo.Map{
+					"totalIncome": v.TotalIncome,
+					"tax":         tax,
+					"taxRefund":   refund,
+				})
+				continue
+			}
+			result = append(result, echo.Map{
+				"totalIncome": v.TotalIncome,
+				"tax":         tax,
+			})
+		}
+		return c.JSON(http.StatusOK, echo.Map{
+			"taxes": result,
 		})
 	}
 }
