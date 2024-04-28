@@ -8,6 +8,7 @@ import (
 
 	"github.com/h3xry/assessment-tax/pkg/domain"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 type Handler struct {
@@ -50,6 +51,12 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 			MaxDeduction:  personal.Amount,
 		})
 		for i, v := range req.Allowances {
+			if ok := lo.Contains([]string{"donation", "personalDeduction", "k-receipt"}, v.AllowanceType); !ok {
+				return domain.Error{
+					HttpCode: http.StatusBadRequest,
+					Message:  "invalid allowance type",
+				}
+			}
 			if v.AllowanceType == "k-receipt" {
 				kReceipt, err := h.deductionUsecase.Find("kReceipt")
 				if err != nil {
