@@ -57,6 +57,12 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 					Message:  "invalid allowance type",
 				}
 			}
+			if v.Amount < 0 {
+				return domain.Error{
+					HttpCode: http.StatusBadRequest,
+					Message:  "allowance amount must be less than 0",
+				}
+			}
 			if v.AllowanceType == "k-receipt" {
 				kReceipt, err := h.deductionUsecase.Find("kReceipt")
 				if err != nil {
