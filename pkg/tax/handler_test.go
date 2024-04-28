@@ -134,11 +134,11 @@ func TestHandleCalculation(t *testing.T) {
 				Allowances: []domain.TaxAllowance{
 					{
 						AllowanceType: "donation",
-						Amount:        200000.0,
+						Amount:        20000.0,
 					},
 				},
 			},
-			responseExpected: `{"tax":29000.0,"taxRefund":11000.0}`,
+			responseExpected: `{"tax":38000.0,"taxRefund":2000.0}`,
 		},
 	}
 	for _, tt := range testCases {
