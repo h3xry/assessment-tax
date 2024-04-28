@@ -47,8 +47,18 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 		req.Allowances = append(req.Allowances, domain.TaxAllowance{
 			AllowanceType: "personalDeduction",
 			Amount:        personal.Amount,
+			MaxDeduction:  personal.Amount,
 		})
-
+		for i, v := range req.Allowances {
+			if v.AllowanceType == "k-receipt" {
+				kReceipt, err := h.deductionUsecase.Find("kReceipt")
+				if err != nil {
+					return err
+				}
+				req.Allowances[i].MaxDeduction = kReceipt.Amount
+				break
+			}
+		}
 		tax, taxRefund, taxLevel := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
 		response := echo.Map{
 			"tax":      tax,
