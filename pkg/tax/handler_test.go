@@ -140,6 +140,20 @@ func TestHandleCalculation(t *testing.T) {
 			},
 			responseExpected: `{"tax":38000.0,"taxRefund":2000.0}`,
 		},
+		{
+			name: "story-6-row-3-success",
+			bodyReqInterface: requestCalculation{
+				TotalIncome: 750000.0,
+				Wht:         50000.0,
+				Allowances: []domain.TaxAllowance{
+					{
+						AllowanceType: "donation",
+						Amount:        15000.0,
+					},
+				},
+			},
+			responseExpected: `{"tax":11250.0,"taxRefund":0.0}`,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
