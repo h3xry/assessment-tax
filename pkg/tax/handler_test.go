@@ -29,6 +29,10 @@ func setupHandleCalculation(body []byte) (*httptest.ResponseRecorder, error) {
 		Name:   "personalDeduction",
 		Amount: 60000,
 	}, nil).Once()
+	deductionUsecase.On("Find", "kReceipt").Return(&models.Deductions{
+		Name:   "kReceipt",
+		Amount: 50000,
+	}, nil).Once()
 
 	handler := NewHandler(e.Group(""), useCase, deductionUsecase)
 
@@ -153,6 +157,24 @@ func TestHandleCalculation(t *testing.T) {
 				},
 			},
 			responseExpected: `{"tax":11250.0,"taxRefund":0.0}`,
+		},
+		{
+			name: "story-7-success",
+			bodyReqInterface: requestCalculation{
+				TotalIncome: 500000.0,
+				Wht:         0.0,
+				Allowances: []domain.TaxAllowance{
+					{
+						AllowanceType: "donation",
+						Amount:        100000.0,
+					},
+					{
+						AllowanceType: "k-receipt",
+						Amount:        200000.0,
+					},
+				},
+			},
+			responseExpected: `{"tax":14000,"taxLevel":[{"level":"0-150,000","tax":0},{"level":"150,001-500,000","tax":14000},{"level":"500,001-1,000,000","tax":0},{"level":"1,000,001-2,000,000","tax":0},{"level":"2,000,001 ขึ้นไป","tax":0}]}`,
 		},
 	}
 	for _, tt := range testCases {
