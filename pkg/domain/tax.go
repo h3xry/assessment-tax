@@ -7,6 +7,7 @@ type TaxUsecase interface {
 type TaxAllowance struct {
 	AllowanceType string  `json:"allowanceType" validate:"required"`
 	Amount        float64 `json:"amount" validate:"required"`
+	MaxDeduction  float64 `json:"-"`
 }
 
 type TaxLevel struct {
@@ -21,5 +22,14 @@ const (
 func (tax *TaxAllowance) Validate() {
 	if tax.AllowanceType == "donation" && tax.Amount > TaxDonationMaxDeduction {
 		tax.Amount = TaxDonationMaxDeduction
+		return
+	}
+	if tax.AllowanceType == "personalDeduction" && tax.Amount > tax.MaxDeduction {
+		tax.Amount = tax.MaxDeduction
+		return
+	}
+	if tax.AllowanceType == "k-receipt" && tax.Amount > tax.MaxDeduction {
+		tax.Amount = tax.MaxDeduction
+		return
 	}
 }

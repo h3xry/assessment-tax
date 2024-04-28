@@ -20,6 +20,7 @@ func TestUsecaseCalculateTax(t *testing.T) {
 		{
 			AllowanceType: "personalDeduction",
 			Amount:        60000.0,
+			MaxDeduction:  60000.0,
 		},
 	}
 	expected := 29000.0
