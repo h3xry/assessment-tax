@@ -200,3 +200,30 @@ func TestHandleCalculation(t *testing.T) {
 		})
 	}
 }
+
+func TestAddPersonalDeduction(t *testing.T) {
+	deductionUsecase := new(mocks.DeductionsUsecase)
+	deductionUsecase.On("Find", "personalDeduction").Return(&models.Deductions{
+		Name:   "personalDeduction",
+		Amount: 60000,
+	}, nil).Once()
+
+	handler := &Handler{
+		deductionUsecase: deductionUsecase,
+	}
+	got := &requestCalculation{
+		Allowances: []domain.TaxAllowance{},
+	}
+	expected := &requestCalculation{
+		Allowances: []domain.TaxAllowance{
+			{
+				AllowanceType: "personalDeduction",
+				Amount:        60000,
+				MaxDeduction:  60000,
+			},
+		},
+	}
+	err := handler.addPersonalDeduction(got)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, got)
+}
