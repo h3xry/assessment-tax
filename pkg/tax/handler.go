@@ -2,7 +2,7 @@ package tax
 
 import (
 	"encoding/csv"
-	"errors"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 
@@ -41,47 +41,78 @@ func (h *Handler) handleCalculation() echo.HandlerFunc {
 		if err := c.Validate(req); err != nil {
 			return err
 		}
-		personal, err := h.deductionUsecase.Find("personalDeduction")
-		if err != nil {
+
+		if err := h.addPersonalDeduction(req); err != nil {
 			return err
 		}
-		req.Allowances = append(req.Allowances, domain.TaxAllowance{
-			AllowanceType: "personalDeduction",
-			Amount:        personal.Amount,
-			MaxDeduction:  personal.Amount,
-		})
-		for i, v := range req.Allowances {
-			if ok := lo.Contains([]string{"donation", "personalDeduction", "k-receipt"}, v.AllowanceType); !ok {
-				return domain.Error{
-					HttpCode: http.StatusBadRequest,
-					Message:  "invalid allowance type",
-				}
-			}
-			if v.Amount < 0 {
-				return domain.Error{
-					HttpCode: http.StatusBadRequest,
-					Message:  "allowance amount must be less than 0",
-				}
-			}
-			if v.AllowanceType == "k-receipt" {
-				kReceipt, err := h.deductionUsecase.Find("kReceipt")
-				if err != nil {
-					return err
-				}
-				req.Allowances[i].MaxDeduction = kReceipt.Amount
-				break
-			}
+
+		if err := h.validateAndAdjustAllowances(req); err != nil {
+			return err
 		}
+
 		tax, taxRefund, taxLevel := h.userCase.CalculateTax(req.TotalIncome, req.Wht, req.Allowances)
-		response := echo.Map{
-			"tax":      tax,
-			"taxLevel": taxLevel,
-		}
-		if taxRefund > 0 {
-			response["taxRefund"] = taxRefund
-		}
+		response := buildResponse(tax, taxRefund, taxLevel)
+
 		return c.JSON(http.StatusOK, response)
 	}
+}
+
+func (h *Handler) addPersonalDeduction(req *requestCalculation) error {
+	personal, err := h.deductionUsecase.Find("personalDeduction")
+	if err != nil {
+		return err
+	}
+	req.Allowances = append(req.Allowances, domain.TaxAllowance{
+		AllowanceType: "personalDeduction",
+		Amount:        personal.Amount,
+		MaxDeduction:  personal.Amount,
+	})
+	return nil
+}
+
+func (h *Handler) validateAndAdjustAllowances(req *requestCalculation) error {
+	for i, v := range req.Allowances {
+		if err := validateAllowance(v); err != nil {
+			return err
+		}
+		if v.AllowanceType == "k-receipt" {
+			kReceipt, err := h.deductionUsecase.Find("kReceipt")
+			if err != nil {
+				return err
+			}
+			req.Allowances[i].MaxDeduction = kReceipt.Amount
+			break
+		}
+	}
+	return nil
+}
+
+func validateAllowance(v domain.TaxAllowance) error {
+	validTypes := []string{"donation", "personalDeduction", "k-receipt"}
+	if !lo.Contains(validTypes, v.AllowanceType) {
+		return domain.Error{
+			HttpCode: http.StatusBadRequest,
+			Message:  "invalid allowance type",
+		}
+	}
+	if v.Amount < 0 {
+		return domain.Error{
+			HttpCode: http.StatusBadRequest,
+			Message:  "allowance amount must be less than 0",
+		}
+	}
+	return nil
+}
+
+func buildResponse(tax float64, taxRefund float64, taxLevel []domain.TaxLevel) echo.Map {
+	response := echo.Map{
+		"tax":      tax,
+		"taxLevel": taxLevel,
+	}
+	if taxRefund > 0 {
+		response["taxRefund"] = taxRefund
+	}
+	return response
 }
 
 func (h *Handler) handleCalculationCSV() echo.HandlerFunc {
@@ -90,72 +121,104 @@ func (h *Handler) handleCalculationCSV() echo.HandlerFunc {
 		if err != nil {
 			return err
 		}
-		src, err := file.Open()
+		records, err := readCSV(file)
+		taxs, err := h.processCSV(records)
+		results, err := h.calculateTaxes(taxs)
 		if err != nil {
 			return err
 		}
-		defer src.Close()
 
-		reader := csv.NewReader(src)
-		records, err := reader.ReadAll()
-		if err != nil {
-			return err
-		}
-		taxs := []requestCalculation{}
-		for i, record := range records {
-			if i == 0 {
-				continue
-			}
-			totalIncome, err := strconv.ParseFloat(record[0], 64)
-			if err != nil {
-				return err
-			}
-			wht, err := strconv.ParseFloat(record[1], 64)
-			if err != nil {
-				return err
-			}
-			if wht >= totalIncome {
-				return errors.New("with holding tax must be less than total income")
-			}
-			donation, err := strconv.ParseFloat(record[2], 64)
-			allowances := []domain.TaxAllowance{}
-			allowances = append(allowances, domain.TaxAllowance{
-				AllowanceType: "donation",
-				Amount:        donation,
-			})
-
-			taxs = append(taxs, requestCalculation{
-				TotalIncome: totalIncome,
-				Wht:         wht,
-				Allowances:  allowances,
-			})
-		}
-		result := []echo.Map{}
-		for _, v := range taxs {
-			personal, err := h.deductionUsecase.Find("personalDeduction")
-			if err != nil {
-				return err
-			}
-			v.Allowances = append(v.Allowances, domain.TaxAllowance{
-				AllowanceType: "personalDeduction",
-				Amount:        personal.Amount,
-			})
-			tax, refund, _ := h.userCase.CalculateTax(v.TotalIncome, v.Wht, v.Allowances)
-			if refund > 0 {
-				result = append(result, echo.Map{
-					"totalIncome": v.TotalIncome,
-					"tax":         tax,
-					"taxRefund":   refund,
-				})
-				continue
-			}
-			result = append(result, echo.Map{
-				"totalIncome": v.TotalIncome,
-				"tax":         tax,
-			})
-		}
 		return c.JSON(http.StatusOK, echo.Map{
-			"taxes": result,
+			"taxes": results,
 		})
 	}
+}
+
+func readCSV(file *multipart.FileHeader) ([][]string, error) {
+	src, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer src.Close()
+	reader := csv.NewReader(src)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	return records, nil
+}
+
+func (u *Handler) validateWHT(wht string, totalIncome string) (float64, float64, error) {
+	whtFloat, err := strconv.ParseFloat(wht, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	totalIncomeFloat, err := strconv.ParseFloat(totalIncome, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+	if whtFloat > totalIncomeFloat {
+		return 0, 0, domain.Error{
+			HttpCode: http.StatusBadRequest,
+			Message:  "WHT must be less than total income",
+		}
+	}
+	return totalIncomeFloat, whtFloat, nil
+}
+
+func (h *Handler) processCSV(records [][]string) ([]requestCalculation, error) {
+	taxs := []requestCalculation{}
+	for i, record := range records {
+		if i == 0 {
+			continue
+		}
+		totalIncome, wht, err := h.validateWHT(record[1], record[2])
+		if err != nil {
+			return nil, err
+		}
+		donation, err := strconv.ParseFloat(record[2], 64)
+		allowances := []domain.TaxAllowance{}
+		allowances = append(allowances, domain.TaxAllowance{
+			AllowanceType: "donation",
+			Amount:        donation,
+		})
+
+		taxs = append(taxs, requestCalculation{
+			TotalIncome: totalIncome,
+			Wht:         wht,
+			Allowances:  allowances,
+		})
+	}
+	return taxs, nil
+}
+
+func (h *Handler) calculateTaxes(taxs []requestCalculation) ([]echo.Map, error) {
+	var results []echo.Map
+
+	for _, v := range taxs {
+		personal, err := h.deductionUsecase.Find("personalDeduction")
+		if err != nil {
+			return nil, err
+		}
+
+		v.Allowances = append(v.Allowances, domain.TaxAllowance{
+			AllowanceType: "personalDeduction",
+			Amount:        personal.Amount,
+		})
+
+		tax, refund, _ := h.userCase.CalculateTax(v.TotalIncome, v.Wht, v.Allowances)
+
+		result := echo.Map{
+			"totalIncome": v.TotalIncome,
+			"tax":         tax,
+		}
+
+		if refund > 0 {
+			result["taxRefund"] = refund
+		}
+
+		results = append(results, result)
+	}
+
+	return results, nil
 }
