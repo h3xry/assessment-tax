@@ -13,6 +13,8 @@ func main() {
 		fx.Provide(config.NewConfig),
 		fx.Provide(database.NewPostgres),
 		fx.Provide(infrastucture.NewServer),
-		fx.Invoke(func(s *infrastucture.Server) {}),
+		fx.Invoke(func(s *infrastucture.Server) {
+			// do nothing
+		}),
 	).Run()
 }
